@@ -1,4 +1,5 @@
 import {useState} from 'react';
+import { authAPI, apiUtils } from '../utils/api';
 
 function Signup({onShowPage, onLogin}) {
     const [username, setUsername] = useState('');
@@ -33,6 +34,7 @@ function Signup({onShowPage, onLogin}) {
             setError('비밀번호가 일치하지 않습니다.');
             return false;
         }
+        setError(''); // Clear previous errors
         return true;
     };
 
@@ -45,20 +47,22 @@ function Signup({onShowPage, onLogin}) {
         setError('');
 
         try {
-            // TODO: API 호출로 회원가입 처리
-            console.log('회원가입 시도:', {username, email, password});
+            const response = await authAPI.signup({username, email, password});
 
-            // 임시 회원가입 성공 처리
-            const userData = {
-                id: 1,
-                username: username,
-                email: email
-            };
+            if (response && response.user && response.token) {
+                // 회원가입 성공 후 바로 로그인 처리
+                apiUtils.setToken(response.token);
+                apiUtils.setUser(response.user);
+                onLogin(response.user); // App.js로 사용자 정보 전달 및 페이지 전환
+            } else {
+                // 백엔드에서 user와 token을 반환하지 않는 경우, 로그인 페이지로 유도할 수 있음
+                setError('회원가입 응답이 올바르지 않습니다. 로그인 해주세요.');
+                onShowPage('login'); // Or handle differently
+            }
 
-            onLogin(userData);
-        } catch (error) {
-            console.error('회원가입 실패:', error);
-            setError('회원가입에 실패했습니다. 다시 시도해주세요.');
+        } catch (err) {
+            console.error('회원가입 실패:', err);
+            setError(apiUtils.getErrorMessage(err) || '회원가입에 실패했습니다. 다시 시도해주세요.');
         } finally {
             setIsLoading(false);
         }

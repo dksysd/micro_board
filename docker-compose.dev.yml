@@ -128,16 +128,20 @@ services:
 
   # API Gateway (개발환경용)
   api-gateway:
-    image: nginx:alpine
+    build: # Dockerfile을 사용하여 이미지를 빌드하도록 변경
+      context: ./api-gateway # Dockerfile이 있는 디렉토리 경로
+      dockerfile: Dockerfile # Dockerfile 이름 (기본값이므로 생략 가능)
     container_name: microboard-api-gateway
     ports:
-      - "8080:80"
-    volumes:
-      - ./api-gateway/nginx.dev.conf:/etc/nginx/nginx.conf:ro
+      - "8080:80" # 호스트의 8080 포트를 컨테이너의 80 포트로 매핑
+      # volumes: # Dockerfile에서 COPY 하므로, 개발 중 빠른 반영이 필요할 때만 주석 해제하여 사용
+      # - ./api-gateway/nginx.conf:/etc/nginx/nginx.conf:ro
+      # - ./api-gateway/snippets:/etc/nginx/snippets:ro # snippets 디렉토리 전체를 마운트
     depends_on:
       - auth-service
       - post-service
       - comment-service
+      - frontend # 프론트엔드 서비스도 의존성에 추가하는 것이 좋습니다.
     networks:
       - microboard-network
     restart: unless-stopped

@@ -1,4 +1,5 @@
 import {useState} from 'react';
+import { authAPI, apiUtils } from '../utils/api';
 
 function Login({onShowPage, onLogin}) {
     const [email, setEmail] = useState('');
@@ -16,20 +17,18 @@ function Login({onShowPage, onLogin}) {
         setError('');
 
         try {
-            // TODO: API 호출로 로그인 처리
-            console.log('로그인 시도:', {email, password});
+            const response = await authAPI.signin({email, password});
 
-            // 임시 로그인 성공 처리
-            const userData = {
-                id: 1,
-                username: '사용자',
-                email: email
-            };
-
-            onLogin(userData);
-        } catch (error) {
-            console.error('로그인 실패:', error);
-            setError('로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.');
+            if (response && response.user && response.token) {
+                apiUtils.setToken(response.token);
+                apiUtils.setUser(response.user);
+                onLogin(response.user); // App.js로 사용자 정보 전달 및 페이지 전환
+            } else {
+                setError('로그인 응답이 올바르지 않습니다.');
+            }
+        } catch (err) {
+            console.error('로그인 실패:', err);
+            setError(apiUtils.getErrorMessage(err) || '로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.');
         } finally {
             setIsLoading(false);
         }

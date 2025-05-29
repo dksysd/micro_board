@@ -5,17 +5,20 @@ function Header({user, onShowPage, onLogout}) {
 
     const handleUserMenuClick = () => {
         if (user) {
-            // 사용자가 로그인된 경우 로그아웃 또는 프로필 메뉴 표시
             onLogout();
         } else {
-            // 로그인되지 않은 경우 로그인 페이지로 이동
             onShowPage('login');
         }
     };
 
     const handleSearch = (e) => {
         e.preventDefault();
-        // TODO: 검색 기능 구현
+        if (searchQuery.trim()) {
+            // 검색 결과 페이지로 이동하거나, 게시글 목록 페이지에 검색 쿼리를 전달
+            // App.js에서 onShowPage가 파라미터를 받을 수 있도록 설계되었다고 가정
+            onShowPage('posts', { query: searchQuery });
+            // setSearchQuery(''); // Optionally clear search after submission
+        }
         console.log('검색:', searchQuery);
     };
 
@@ -45,14 +48,16 @@ function Header({user, onShowPage, onLogout}) {
                         글쓰기
                     </button>
                     <button
-                        className="text-[#0d141c] text-sm font-medium leading-normal hover:text-[#0c7ff2] transition-colors">
+                        className="text-[#0d141c] text-sm font-medium leading-normal hover:text-[#0c7ff2] transition-colors"
+                        // onClick={() => onShowPage('categories')} // 카테고리 페이지 기능 추가 시
+                    >
                         카테고리
                     </button>
                 </div>
             </div>
 
             <div className="flex flex-1 justify-end gap-2 md:gap-4 max-w-xs md:max-w-none">
-                <div className="flex flex-col min-w-32 md:min-w-40 !h-10 max-w-64">
+                <form onSubmit={handleSearch} className="flex flex-col min-w-32 md:min-w-40 !h-10 max-w-64"> {/* form 태그 사용 */}
                     <div className="flex w-full flex-1 items-stretch rounded-xl h-full">
                         <div
                             className="text-[#49739c] flex border-none bg-[#e7edf4] items-center justify-center pl-3 md:pl-4 rounded-l-xl border-r-0">
@@ -68,14 +73,12 @@ function Header({user, onShowPage, onLogout}) {
                             className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-xl text-[#0d141c] focus:outline-0 focus:ring-0 border-none bg-[#e7edf4] focus:border-none h-full placeholder:text-[#49739c] px-2 md:px-4 rounded-l-none border-l-0 pl-2 text-sm font-normal leading-normal"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            onKeyPress={(e) => {
-                                if (e.key === 'Enter') {
-                                    handleSearch(e);
-                                }
-                            }}
+                            // onKeyPress는 form onSubmit으로 대체 가능
                         />
+                        {/* 검색 버튼을 명시적으로 추가하거나, Enter키로 form 제출 유도 */}
+                        <button type="submit" className="hidden">Search</button>
                     </div>
-                </div>
+                </form>
 
                 <button
                     className="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-10 bg-[#e7edf4] text-[#0d141c] gap-2 text-sm font-bold leading-normal tracking-[0.015em] min-w-0 px-2.5 hover:bg-[#d1d9e0] transition-colors">

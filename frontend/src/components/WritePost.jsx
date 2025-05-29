@@ -1,31 +1,36 @@
 import {useState} from 'react';
+import { postAPI, apiUtils } from '../utils/api';
 
 function WritePost({onShowPage, user}) {
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState(''); // 에러 메시지 상태 추가
 
     const handleSubmit = async () => {
         if (!user) {
-            alert('로그인이 필요합니다.');
+            setError('게시글을 작성하려면 로그인이 필요합니다.');
+            // alert('로그인이 필요합니다.'); // alert 대신 error state 사용 고려
             onShowPage('login');
             return;
         }
 
         if (!title.trim() || !content.trim()) {
-            alert('제목과 내용을 모두 입력해주세요.');
+            setError('제목과 내용을 모두 입력해주세요.');
             return;
         }
 
         setIsLoading(true);
+        setError('');
+
         try {
-            // TODO: API 호출로 게시글 작성
-            console.log('게시글 작성:', {title, content});
-            alert('게시글이 성공적으로 작성되었습니다.');
-            onShowPage('posts');
-        } catch (error) {
-            console.error('게시글 작성 실패:', error);
-            alert('게시글 작성에 실패했습니다.');
+            // API 호출로 게시글 작성
+            await postAPI.createPost({ title, content /* , userId: user.id (백엔드가 토큰에서 userId를 추출한다면 불필요) */ });
+            // alert('게시글이 성공적으로 작성되었습니다.'); // 더 나은 UX를 위해 알림/토스트 사용 고려
+            onShowPage('posts'); // 성공 시 게시글 목록으로 이동
+        } catch (err) {
+            console.error('게시글 작성 실패:', err);
+            setError(apiUtils.getErrorMessage(err) || '게시글 작성에 실패했습니다.');
         } finally {
             setIsLoading(false);
         }
@@ -47,6 +52,12 @@ function WritePost({onShowPage, user}) {
                 <p className="text-[#0d141c] tracking-light text-[32px] font-bold leading-tight">새 글 작성</p>
             </div>
 
+            {error && (
+                <div className="mx-4 mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm">
+                    {error}
+                </div>
+            )}
+
             <div className="flex flex-col gap-4 px-4 py-3">
                 <div className="flex flex-col">
                     <input
@@ -60,17 +71,17 @@ function WritePost({onShowPage, user}) {
                 </div>
 
                 <div className="flex flex-col">
-          <textarea
-              placeholder="내용을 입력하세요..."
-              className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-xl text-[#0d141c] focus:outline-0 focus:ring-0 border-none bg-[#e7edf4] focus:border-none min-h-[300px] placeholder:text-[#49739c] p-4 text-base font-normal leading-normal"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              disabled={isLoading}
-              style={{
-                  scrollbarWidth: 'thin',
-                  scrollbarColor: '#cbd5e1 #f1f5f9'
-              }}
-          />
+                  <textarea
+                      placeholder="내용을 입력하세요..."
+                      className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-xl text-[#0d141c] focus:outline-0 focus:ring-0 border-none bg-[#e7edf4] focus:border-none min-h-[300px] placeholder:text-[#49739c] p-4 text-base font-normal leading-normal"
+                      value={content}
+                      onChange={(e) => setContent(e.target.value)}
+                      disabled={isLoading}
+                      style={{
+                          scrollbarWidth: 'thin',
+                          scrollbarColor: '#cbd5e1 #f1f5f9'
+                      }}
+                  />
                 </div>
             </div>
 
