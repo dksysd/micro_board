@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8"/>
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <meta name="theme-color" content="#3b82f6"/>
+    <meta name="description" content="MicroBoard - 마이크로서비스 기반 게시판 플랫폼"/>
+
+    <!-- Google Fonts 미리 로드 -->
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'"
+          href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&family=Noto+Sans:wght@400;500;700;900&display=swap">
+
+    <!-- Fallback for browsers that don't support rel="preload" -->
+    <noscript>
+        <link rel="stylesheet"
+              href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&family=Noto+Sans:wght@400;500;700;900&display=swap">
+    </noscript>
+
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png"/>
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json"/>
+
+    <title>MicroBoard - 마이크로서비스 게시판</title>
+
+    <!-- Open Graph 메타 태그 -->
+    <meta property="og:type" content="website"/>
+    <meta property="og:title" content="MicroBoard - 마이크로서비스 게시판"/>
+    <meta property="og:description" content="Docker Swarm을 활용한 현대적인 마이크로서비스 게시판 플랫폼"/>
+    <meta property="og:url" content="https://microboard.example.com"/>
+
+    <!-- Twitter Card 메타 태그 -->
+    <meta name="twitter:card" content="summary_large_image"/>
+    <meta name="twitter:title" content="MicroBoard - 마이크로서비스 게시판"/>
+    <meta name="twitter:description" content="Docker Swarm을 활용한 현대적인 마이크로서비스 게시판 플랫폼"/>
+</head>
+<body>
+<noscript>You need to enable JavaScript to run this app.</noscript>
+<div id="root"></div>
+
+<!-- 개발 환경에서만 표시되는 성능 측정 도구 -->
+<script>
+    if (process.env.NODE_ENV === 'development') {
+        console.log('MicroBoard Development Mode');
+    }
+</script>
+</body>
+</html>
