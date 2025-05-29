@@ -1,7 +1,25 @@
 import axios from 'axios';
 
-// API 기본 URL 설정
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+// API 기본 URL 설정 - 안전한 환경변수 접근
+const getApiBaseUrl = () => {
+    // 개발환경에서 process.env가 undefined인 경우를 대비
+    if (typeof process !== 'undefined' && process.env && process.env.REACT_APP_API_URL) {
+        return process.env.REACT_APP_API_URL;
+    }
+
+    // 브라우저 환경에서 window 객체를 통한 접근 시도
+    if (typeof window !== 'undefined' && window.ENV && window.ENV.REACT_APP_API_URL) {
+        return window.ENV.REACT_APP_API_URL;
+    }
+
+    // 기본값 - 현재 호스트의 8080 포트 사용
+    const currentHost = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+    return `http://${currentHost}:8080`;
+};
+
+const API_BASE_URL = getApiBaseUrl();
+
+console.log('API Base URL:', API_BASE_URL); // 디버깅용
 
 // Axios 인스턴스 생성
 const api = axios.create({
@@ -10,6 +28,8 @@ const api = axios.create({
     headers: {
         'Content-Type': 'application/json',
     },
+    // 개발환경에서 CORS 문제 해결을 위해 추가
+    withCredentials: false, // 필요시 true로 변경
 });
 
 // 요청 인터셉터 (토큰 자동 추가)
@@ -19,9 +39,11 @@ api.interceptors.request.use(
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
+        console.log('API 요청:', config.method?.toUpperCase(), config.url); // 디버깅용
         return config;
     },
     (error) => {
+        console.error('요청 인터셉터 에러:', error);
         return Promise.reject(error);
     }
 );
@@ -29,20 +51,20 @@ api.interceptors.request.use(
 // 응답 인터셉터 (에러 처리)
 api.interceptors.response.use(
     (response) => {
+        console.log('API 응답 성공:', response.status, response.config.url); // 디버깅용
         return response;
     },
     (error) => {
+        console.error('API 응답 에러:', error.response?.status, error.message, error.config?.url);
+
         if (error.response?.status === 401) {
             // 토큰이 만료되거나 유효하지 않은 경우
             localStorage.removeItem('token');
             localStorage.removeItem('user');
-            // App.js에서 user 상태를 null로 설정하고 로그인 페이지로 리디렉션해야 함
-            // window.location.href = '/login'; // 직접적인 페이지 이동보다는 상태 관리를 통해 처리하는 것이 좋음
-            // 예를 들어, 커스텀 이벤트를 발생시키거나, App 레벨에서 이 에러를 캐치하여 처리
             console.error("Unauthorized or Token Expired. Logging out.");
-            //  App.js에서 이 에러를 감지하고 로그아웃 처리를 하도록 유도할 수 있습니다.
-            //  Event emitter 또는 redux/context dispatch 등을 사용할 수 있습니다.
-            //  여기서는 일단 로컬 스토리지 정리만 합니다.
+
+            // 로그아웃 이벤트 발생
+            window.dispatchEvent(new CustomEvent('auth:logout'));
         }
         return Promise.reject(error);
     }
@@ -52,11 +74,11 @@ api.interceptors.response.use(
 export const authAPI = {
     signup: async (userData) => {
         const response = await api.post('/api/auth/signup', userData);
-        return response.data; // Expects { user: {}, token: "..." }
+        return response.data;
     },
     signin: async (credentials) => {
         const response = await api.post('/api/auth/signin', credentials);
-        return response.data; // Expects { user: {}, token: "..." }
+        return response.data;
     },
     getProfile: async () => {
         const response = await api.get('/api/auth/profile');
@@ -76,11 +98,11 @@ export const postAPI = {
             url += `&search=${encodeURIComponent(searchQuery)}`;
         }
         const response = await api.get(url);
-        return response.data; // Expects { posts: [], totalPages: X, currentPage: Y }
+        return response.data;
     },
     getPost: async (postId) => {
         const response = await api.get(`/api/posts/${postId}`);
-        return response.data; // Expects full post object with author, etc.
+        return response.data;
     },
     createPost: async (postData) => {
         const response = await api.post('/api/posts', postData);
@@ -94,10 +116,9 @@ export const postAPI = {
         const response = await api.delete(`/api/posts/${postId}`);
         return response.data;
     },
-    // 게시글 좋아요/싫어요 (토글 방식 또는 별도 API)
     toggleLikePost: async (postId) => {
-        const response = await api.post(`/api/posts/${postId}/like`); // URL은 API 설계에 따라 다를 수 있음
-        return response.data; // Expects updated post or { likes: count, likedByCurrentUser: boolean }
+        const response = await api.post(`/api/posts/${postId}/like`);
+        return response.data;
     },
 };
 
@@ -105,11 +126,11 @@ export const postAPI = {
 export const commentAPI = {
     getComments: async (postId, page = 1, limit = 20) => {
         const response = await api.get(`/api/posts/${postId}/comments?page=${page}&limit=${limit}`);
-        return response.data; // Expects { comments: [], totalPages: X, currentPage: Y }
+        return response.data;
     },
     createComment: async (postId, commentData) => {
         const response = await api.post(`/api/posts/${postId}/comments`, commentData);
-        return response.data; // Expects the newly created comment object
+        return response.data;
     },
     updateComment: async (commentId, commentData) => {
         const response = await api.put(`/api/comments/${commentId}`, commentData);
@@ -123,14 +144,13 @@ export const commentAPI = {
         const response = await api.get(`/api/comments/${commentId}`);
         return response.data;
     },
-    // 댓글 좋아요/싫어요
     likeComment: async (commentId) => {
         const response = await api.post(`/api/comments/${commentId}/like`);
-        return response.data; // Expects updated comment or { likes: count }
+        return response.data;
     },
     dislikeComment: async (commentId) => {
         const response = await api.post(`/api/comments/${commentId}/dislike`);
-        return response.data; // Expects updated comment or { dislikes: count }
+        return response.data;
     },
 };
 
@@ -181,8 +201,8 @@ export const apiUtils = {
     },
     logout: () => {
         localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        // Consider redirecting or emitting an event for App.js to handle logout state
+        localStorage.removeUser();
+        window.dispatchEvent(new CustomEvent('auth:logout'));
     },
 };
 

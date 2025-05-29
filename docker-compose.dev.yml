@@ -48,6 +48,7 @@ services:
     build:
       context: ./auth-service
       dockerfile: Dockerfile
+      target: development
     container_name: microboard-auth-service
     environment:
       - DB_HOST=auth-db
@@ -68,12 +69,12 @@ services:
       - /app/node_modules
     networks:
       - microboard-network
-    command: npm run dev
 
   post-service:
     build:
       context: ./post-service
       dockerfile: Dockerfile
+      target: development
     container_name: microboard-post-service
     environment:
       - DB_HOST=post-db
@@ -95,12 +96,12 @@ services:
       - /app/node_modules
     networks:
       - microboard-network
-    command: npm run dev
 
   comment-service:
     build:
       context: ./comment-service
       dockerfile: Dockerfile
+      target: development
     container_name: microboard-comment-service
     environment:
       - DB_HOST=comment-db
@@ -124,7 +125,6 @@ services:
       - /app/node_modules
     networks:
       - microboard-network
-    command: npm run dev
 
   # API Gateway (개발환경용)
   api-gateway:
@@ -141,7 +141,6 @@ services:
       - auth-service
       - post-service
       - comment-service
-      - frontend # 프론트엔드 서비스도 의존성에 추가하는 것이 좋습니다.
     networks:
       - microboard-network
     restart: unless-stopped
@@ -154,10 +153,10 @@ services:
       target: build
     container_name: microboard-frontend
     environment:
-      - REACT_APP_API_URL=http://localhost:8080
+      - REACT_APP_API_URL=http://api-gateway:8080
       - CHOKIDAR_USEPOLLING=true
-#      - WDS_SOCKET_HOST=localhost
-#      - WDS_SOCKET_PORT=3000
+      - GENERATE_SOURCEMAP=false  # 빌드 속도 향상
+      - DISABLE_ESLINT_PLUGIN=true  # ESLint 플러그인 비활성화 (선택사항)
     ports:
       - "3000:3000"
     volumes:
@@ -168,6 +167,8 @@ services:
     stdin_open: true
     tty: true
     command: npm start
+    depends_on:
+      - api-gateway  # API Gateway가 먼저 실행되도록
 
   # Redis (캐싱 및 세션 관리용 - 선택사항)
   redis:

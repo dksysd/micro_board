@@ -10,8 +10,7 @@
 
 ## 🏗️ 프로젝트 개요
 
-MicroBoard는 **Docker Swarm**을 활용한 마이크로서비스 아키텍처 기반의 현대적인 게시판 플랫폼입니다. 각 기능별로 독립적인 서비스로 분리되어 있어 확장성, 유지보수성, 그리고 장애 격리 측면에서
-뛰어난 성능을 제공합니다.
+MicroBoard는 **Docker Swarm**을 활용한 마이크로서비스 아키텍처 기반의 현대적인 게시판 플랫폼입니다. 각 기능별로 독립적인 서비스로 분리되어 있어 확장성, 유지보수성, 그리고 장애 격리 측면에서 뛰어난 성능을 제공합니다.
 
 ### ✨ 주요 특징
 
@@ -49,7 +48,6 @@ MicroBoard는 **Docker Swarm**을 활용한 마이크로서비스 아키텍처 �
 ## 🛠️ 기술 스택
 
 ### Backend Services
-
 - **Node.js 18+**: JavaScript 런타임
 - **Express.js**: 웹 프레임워크
 - **PostgreSQL 14**: 관계형 데이터베이스
@@ -59,14 +57,12 @@ MicroBoard는 **Docker Swarm**을 활용한 마이크로서비스 아키텍처 �
 - **Joi**: 입력 검증
 
 ### Frontend
-
 - **React 18**: 사용자 인터페이스 라이브러리
 - **Tailwind CSS**: 유틸리티 우선 CSS 프레임워크
 - **Axios**: HTTP 클라이언트
 - **Plus Jakarta Sans**: 웹 폰트
 
 ### Infrastructure
-
 - **Docker & Docker Swarm**: 컨테이너 오케스트레이션
 - **Nginx**: 리버스 프록시 및 로드 밸런서
 - **Docker Secrets**: 민감 정보 관리
@@ -74,10 +70,61 @@ MicroBoard는 **Docker Swarm**을 활용한 마이크로서비스 아키텍처 �
 - **Overlay Networks**: 서비스 간 네트워크 분리
 
 ### Development Tools
-
 - **Docker Compose**: 개발환경 구성
 - **Adminer**: 데이터베이스 관리 도구
 - **ESLint & Prettier**: 코드 품질 도구
+
+## 🛠️ 문제 해결
+
+### Docker 빌드 오류
+
+**`react-scripts: not found` 오류가 발생하는 경우:**
+
+```bash
+# 빠른 해결
+./scripts/fix-docker.sh
+
+# 또는 수동 해결
+docker builder prune -f
+docker-compose -f docker-compose.dev.yml up --build
+```
+
+**권한 오류가 발생하는 경우:**
+
+```bash
+# Docker 그룹에 사용자 추가
+sudo usermod -aG docker $USER
+
+# 로그아웃 후 재로그인 또는
+newgrp docker
+
+# 스크립트 권한 설정
+chmod +x scripts/*.sh
+```
+
+### 개발환경 문제
+
+**포트 충돌 오류:**
+
+```bash
+# 사용 중인 포트 확인
+sudo lsof -i :3000
+sudo lsof -i :8080
+
+# 기존 컨테이너 정리
+docker-compose -f docker-compose.dev.yml down
+make dev-clean
+```
+
+**데이터베이스 연결 오류:**
+
+```bash
+# 데이터베이스 컨테이너 재시작
+docker-compose -f docker-compose.dev.yml restart auth-db post-db comment-db
+
+# 데이터베이스 로그 확인
+docker-compose -f docker-compose.dev.yml logs auth-db
+```
 
 ## 🚀 빠른 시작
 
@@ -112,7 +159,21 @@ cp .env.example .env
 docker-compose -f docker-compose.dev.yml up -d
 ```
 
-### 4. 프로덕션 환경 배포
+### 4. 문제 해결 (필요시)
+
+Docker 빌드 오류가 발생하면:
+
+```bash
+# 자동 문제 해결
+./scripts/fix-docker.sh
+
+# 수동 해결
+chmod +x scripts/*.sh
+docker builder prune -f
+./scripts/dev.sh restart
+```
+
+### 5. 프로덕션 환경 배포
 
 ```bash
 # 프로덕션 환경 빌드 및 배포
@@ -122,13 +183,11 @@ docker-compose -f docker-compose.dev.yml up -d
 ## 📱 서비스 접근
 
 ### 개발환경
-
 - **Frontend**: http://localhost:3000
 - **API Gateway**: http://localhost:8080
 - **Adminer (DB 관리)**: http://localhost:8081
 
 ### 프로덕션 환경
-
 - **Frontend**: http://localhost:3000
 - **API Gateway**: http://localhost:80
 
@@ -163,14 +222,12 @@ npm start
 ### API 엔드포인트
 
 #### 인증 API
-
 - `POST /api/auth/signup` - 회원가입
 - `POST /api/auth/signin` - 로그인
 - `GET /api/auth/profile` - 프로필 조회
 - `POST /api/auth/verify` - 토큰 검증
 
 #### 게시글 API
-
 - `GET /api/posts` - 게시글 목록 조회
 - `GET /api/posts/:id` - 게시글 상세 조회
 - `POST /api/posts` - 게시글 작성 (인증 필요)
@@ -178,7 +235,6 @@ npm start
 - `DELETE /api/posts/:id` - 게시글 삭제 (인증 필요)
 
 #### 댓글 API
-
 - `GET /api/posts/:postId/comments` - 댓글 목록 조회
 - `POST /api/posts/:postId/comments` - 댓글 작성 (인증 필요)
 - `PUT /api/comments/:id` - 댓글 수정 (인증 필요)
@@ -187,42 +243,36 @@ npm start
 ### 데이터베이스 스키마
 
 #### Users 테이블 (Auth DB)
-
 ```sql
-CREATE TABLE users
-(
-    id            SERIAL PRIMARY KEY,
-    username      VARCHAR(50) UNIQUE  NOT NULL,
-    email         VARCHAR(100) UNIQUE NOT NULL,
-    password_hash VARCHAR(255)        NOT NULL,
-    created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 ```
 
 #### Posts 테이블 (Post DB)
-
 ```sql
-CREATE TABLE posts
-(
-    id         SERIAL PRIMARY KEY,
-    title      VARCHAR(255) NOT NULL,
-    content    TEXT         NOT NULL,
-    author_id  INTEGER      NOT NULL,
+CREATE TABLE posts (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    author_id INTEGER NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 ```
 
 #### Comments 테이블 (Comment DB)
-
 ```sql
-CREATE TABLE comments
-(
-    id         SERIAL PRIMARY KEY,
-    post_id    INTEGER NOT NULL,
-    author_id  INTEGER NOT NULL,
-    content    TEXT    NOT NULL,
+CREATE TABLE comments (
+    id SERIAL PRIMARY KEY,
+    post_id INTEGER NOT NULL,
+    author_id INTEGER NOT NULL,
+    content TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -291,19 +341,16 @@ docker service update --image microboard/auth-service:v2 microboard-app_auth-ser
 ## 🔒 보안 고려사항
 
 ### 네트워크 분리
-
 - **frontend-net**: Frontend ↔ API Gateway
 - **backend-net**: API Gateway ↔ Backend Services
 - **db-net**: Backend Services ↔ Databases
 
 ### 인증 및 권한
-
 - JWT 토큰 기반 무상태 인증
 - 비밀번호 bcrypt 해싱 (12 rounds)
 - Docker Secrets로 민감 정보 관리
 
 ### API 보안
-
 - CORS 정책 적용
 - Rate Limiting
 - Input validation (Joi)

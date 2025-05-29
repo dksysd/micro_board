@@ -124,6 +124,7 @@ set_permissions() {
         "setup.sh"
         "scripts/dev.sh"
         "scripts/build.sh"
+        "scripts/fix-docker.sh"
     )
 
     for script in "${scripts[@]}"; do

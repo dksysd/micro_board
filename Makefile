@@ -51,6 +51,11 @@ dev-build: setup-permissions ## 개발환경 이미지 재빌드
 	@echo "🔨 이미지를 재빌드합니다..."
 	./scripts/dev.sh build
 
+# Docker 관련 문제 해결
+fix-docker: setup-permissions ## Docker 빌드 문제 해결
+	@echo "🔧 Docker 빌드 문제를 해결합니다..."
+	./scripts/fix-docker.sh
+
 # 프로덕션 배포 관련 명령어
 build: setup-permissions ## 프로덕션 이미지 빌드 및 배포
 	@echo "🏗️ 프로덕션 환경을 빌드합니다..."
