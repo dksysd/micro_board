@@ -16,22 +16,41 @@ const updatePostSchema = Joi.object({
     content: Joi.string().min(1)
 }).min(1);
 
-// 게시글 목록 조회 (페이지네이션 지원)
+// 게시글 목록 조회 (페이지네이션 및 검색 지원)
 router.get('/', async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
         const limit = Math.min(parseInt(req.query.limit) || 10, 50); // 최대 50개
         const offset = (page - 1) * limit;
+        const searchQuery = req.query.search ? req.query.search.trim() : '';
 
-        // 전체 게시글 수 조회
-        const countResult = await query('SELECT COUNT(*) as total FROM posts');
+        let countSql = 'SELECT COUNT(*) as total FROM posts';
+        let postsSql = 'SELECT id, title, content, author_id, created_at, updated_at FROM posts';
+        let queryParams = [];
+        let whereConditions = [];
+
+        // 검색 기능 추가
+        if (searchQuery) {
+            whereConditions.push('(title ILIKE $1 OR content ILIKE $1)');
+            queryParams.push(`%${searchQuery}%`);
+        }
+
+        // WHERE 절 추가
+        if (whereConditions.length > 0) {
+            const whereClause = ` WHERE ${whereConditions.join(' AND ')}`;
+            countSql += whereClause;
+            postsSql += whereClause;
+        }
+
+        // ORDER BY와 LIMIT, OFFSET 추가
+        postsSql += ' ORDER BY created_at DESC LIMIT $' + (queryParams.length + 1) + ' OFFSET $' + (queryParams.length + 2);
+
+        // 전체 게시글 수 조회 (검색 조건 적용)
+        const countResult = await query(countSql, queryParams);
         const total = parseInt(countResult.rows[0].total);
 
-        // 게시글 목록 조회
-        const result = await query(
-            'SELECT id, title, content, author_id, created_at, updated_at FROM posts ORDER BY created_at DESC LIMIT $1 OFFSET $2',
-            [limit, offset]
-        );
+        // 게시글 목록 조회 (검색 조건 적용)
+        const result = await query(postsSql, [...queryParams, limit, offset]);
 
         // 작성자 정보 조회
         const authorIds = [...new Set(result.rows.map(post => post.author_id))];
@@ -69,7 +88,8 @@ router.get('/', async (req, res) => {
                 totalPages: Math.ceil(total / limit),
                 hasNext: page < Math.ceil(total / limit),
                 hasPrev: page > 1
-            }
+            },
+            searchQuery // 현재 검색어도 응답에 포함
         });
 
     } catch (error) {

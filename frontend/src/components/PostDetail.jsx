@@ -27,8 +27,9 @@ function PostDetail({onShowPage, user, postId}) {
             setIsLoadingPost(true);
             setPostError('');
             try {
-                const postData = await postAPI.getPost(postId);
-                setPost(postData);
+                const response = await postAPI.getPost(postId);
+                // 백엔드에서 { post: {...} } 형태로 응답하므로 response.post로 접근
+                setPost(response.post || response); // response.post가 없으면 response 자체를 사용 (API 구조에 따라)
             } catch (err) {
                 console.error("게시글 상세 정보 로드 실패:", err);
                 setPostError(apiUtils.getErrorMessage(err) || "게시글 정보를 불러오는데 실패했습니다.");
@@ -47,7 +48,7 @@ function PostDetail({onShowPage, user, postId}) {
             setCommentError('');
             try {
                 const commentsData = await commentAPI.getComments(postId);
-                setComments(commentsData.comments || []); // API 응답 형식에 따라
+                setComments(commentsData.comments || commentsData || []); // API 응답 형식에 따라
             } catch (err) {
                 console.error("댓글 목록 로드 실패:", err);
                 setCommentError(apiUtils.getErrorMessage(err) || "댓글을 불러오는데 실패했습니다.");
@@ -73,7 +74,9 @@ function PostDetail({onShowPage, user, postId}) {
         setIsSubmittingComment(true);
         setSubmitCommentError('');
         try {
-            const createdComment = await commentAPI.createComment(postId, { content: newComment });
+            const response = await commentAPI.createComment(postId, { content: newComment });
+            const createdComment = response.comment || response; // API 응답 구조에 따라
+
             // API가 생성된 댓글 객체를 반환한다고 가정 (작성자 정보 포함)
             // 실제로는 user 객체에서 사용자 정보를 가져와서 프론트에서 구성하거나, 백엔드가 author 정보를 채워줘야 함
             const commentWithOwner = {
@@ -91,54 +94,6 @@ function PostDetail({onShowPage, user, postId}) {
             setIsSubmittingComment(false);
         }
     };
-
-    const handleLikeComment = async (commentId) => {
-        if (!user) {
-            alert('로그인이 필요합니다.'); return;
-        }
-        try {
-            const updatedComment = await commentAPI.likeComment(commentId); // API가 업데이트된 댓글 반환 가정
-            setComments(comments.map(c => c.id === commentId ? { ...c, likes: updatedComment.likes, likedByCurrentUser: updatedComment.likedByCurrentUser } : c));
-        } catch (error) {
-            console.error('댓글 좋아요 실패:', error);
-            alert('댓글 좋아요 처리에 실패했습니다.');
-        }
-    };
-
-    const handleDislikeComment = async (commentId) => {
-        if (!user) {
-            alert('로그인이 필요합니다.'); return;
-        }
-        try {
-            const updatedComment = await commentAPI.dislikeComment(commentId); // API가 업데이트된 댓글 반환 가정
-            setComments(comments.map(c => c.id === commentId ? { ...c, dislikes: updatedComment.dislikes, dislikedByCurrentUser: updatedComment.dislikedByCurrentUser } : c));
-        } catch (error) {
-            console.error('댓글 싫어요 실패:', error);
-            alert('댓글 싫어요 처리에 실패했습니다.');
-        }
-    };
-
-    const handlePostLike = async () => {
-        if (!user) {
-            alert('로그인이 필요합니다.');
-            onShowPage('login');
-            return;
-        }
-        if (!post || !post.id) return;
-        try {
-            const updatedPostData = await postAPI.toggleLikePost(post.id);
-            // API가 업데이트된 post.likes와 현재 유저의 좋아요 여부를 반환한다고 가정
-            setPost(prevPost => ({
-                ...prevPost,
-                likes: updatedPostData.likesCount !== undefined ? updatedPostData.likesCount : prevPost.likes, // API 응답에 따라 필드명 확인
-                likedByCurrentUser: updatedPostData.likedByCurrentUser
-            }));
-        } catch (error) {
-            console.error('Failed to like post:', error);
-            alert('게시글 좋아요 처리에 실패했습니다.');
-        }
-    };
-
 
     const formatContent = (content) => {
         if (!content) return null;
@@ -191,9 +146,6 @@ function PostDetail({onShowPage, user, postId}) {
             <h1 className="text-[#0d141c] tracking-light text-[32px] font-bold leading-tight px-4 text-left pb-3 pt-6">
                 {post.title}
             </h1>
-            <p className="text-[#49739c] text-sm font-normal leading-normal pb-3 pt-1 px-4">
-                {post.author?.username || '익명'} 작성 · {formatDate(post.createdAt || post.date)} · 조회 {post.views || 0}
-            </p>
 
             {post.image && (
                 <div className="flex w-full grow bg-slate-50 py-3">
@@ -208,40 +160,6 @@ function PostDetail({onShowPage, user, postId}) {
 
             <div className="px-4 py-3 prose max-w-none"> {/* Tailwind CSS Prose plugin for nice article styling */}
                 {formatContent(post.content)}
-            </div>
-
-            <div className="flex flex-wrap gap-4 px-4 py-3">
-                <button // 버튼으로 변경하여 클릭 가능하게 함
-                    onClick={handlePostLike}
-                    className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg hover:bg-[#e7edf4] transition-colors cursor-pointer ${post.likedByCurrentUser ? 'text-[#0c7ff2]' : 'text-[#49739c]'}`}
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor"
-                         viewBox="0 0 256 256" >
-                        <path
-                            d="M178,32c-20.65,0-38.73,8.88-50,23.89C116.73,40.88,98.65,32,78,32A62.07,62.07,0,0,0,16,94c0,70,103.79,126.66,108.21,129a8,8,0,0,0,7.58,0C136.21,220.66,240,164,240,94A62.07,62.07,0,0,0,178,32ZM128,206.8C109.74,196.16,32,147.69,32,94A46.06,46.06,0,0,1,78,48c19.45,0,35.78,10.36,42.6,27a8,8,0,0,0,14.8,0c6.82-16.67,23.15-27,42.6-27a46.06,46.06,0,0,1,46,46C224,147.61,146.24,196.15,128,206.8Z"></path>
-                    </svg>
-                    <p className="text-[13px] font-bold leading-normal tracking-[0.015em]">{post.likesCount !== undefined ? post.likesCount : (post.likes || 0)}</p>
-                </button>
-                <div
-                    className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg hover:bg-[#e7edf4] transition-colors cursor-pointer"> {/* 댓글 수 클릭은 보통 스크롤 이동 */}
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor"
-                         viewBox="0 0 256 256" className="text-[#49739c]">
-                        <path
-                            d="M140,128a12,12,0,1,1-12-12A12,12,0,0,1,140,128ZM84,116a12,12,0,1,0,12,12A12,12,0,0,0,84,116Zm88,0a12,12,0,1,0,12,12A12,12,0,0,0,172,116Zm60,12A104,104,0,0,1,79.12,219.82L45.07,231.17a16,16,0,0,1-20.24-20.24l11.35-34.05A104,104,0,1,1,232,128Zm-16,0A88,88,0,1,0,51.81,172.06a8,8,0,0,1,.66,6.54L40,216,77.4,203.53a7.85,7.85,0,0,1,2.53-.42,8,8,0,0,1,4,1.08A88,88,0,0,0,216,128Z"></path>
-                    </svg>
-                    <p className="text-[#49739c] text-[13px] font-bold leading-normal tracking-[0.015em]">{post.commentsCount || comments.length || 0}</p>
-                </div>
-                <div // 공유 기능은 UI만 (실제 구현은 복잡)
-                    className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg hover:bg-[#e7edf4] transition-colors cursor-pointer"
-                    onClick={() => console.log("Share post ID:", post.id)}
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor"
-                         viewBox="0 0 256 256" className="text-[#49739c]">
-                        <path
-                            d="M229.66,109.66l-48,48a8,8,0,0,1-11.32-11.32L204.69,112H165a88,88,0,0,0-85.23,66,8,8,0,0,1-15.5-4A103.94,103.94,0,0,1,165,96h39.71L170.34,61.66a8,8,0,0,1,11.32-11.32l48,48A8,8,0,0,1,229.66,109.66ZM192,208H40V88a8,8,0,0,0-16,0V208a16,16,0,0,0,16,16H192a8,8,0,0,0,0-16Z"></path>
-                    </svg>
-                    <p className="text-[#49739c] text-[13px] font-bold leading-normal tracking-[0.015em]">{post.shares || 0}</p>
-                </div>
             </div>
 
             {/* 댓글 섹션 */}
@@ -310,32 +228,6 @@ function PostDetail({onShowPage, user, postId}) {
                             <p className="text-[#49739c] text-sm font-normal leading-normal">{formatDate(comment.createdAt || comment.date)}</p>
                         </div>
                         <p className="text-[#0d141c] text-sm font-normal leading-normal py-1 whitespace-pre-wrap">{comment.content}</p> {/* py-1, whitespace-pre-wrap 추가 */}
-                        <div className="flex w-full flex-row items-center justify-start gap-6 pt-2">
-                            <button // 버튼으로 변경
-                                className={`flex items-center gap-2 cursor-pointer hover:bg-[#e7edf4] rounded-lg px-2 py-1 transition-colors ${comment.likedByCurrentUser ? 'text-[#0c7ff2]' : 'text-[#49739c]'}`}
-                                onClick={() => handleLikeComment(comment.id)}
-                                disabled={!user}
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" fill="currentColor"
-                                     viewBox="0 0 256 256">
-                                    <path
-                                        d="M234,80.12A24,24,0,0,0,216,72H160V56a40,40,0,0,0-40-40,8,8,0,0,0-7.16,4.42L75.06,96H32a16,16,0,0,0-16,16v88a16,16,0,0,0,16,16H204a24,24,0,0,0,23.82-21l12-96A24,24,0,0,0,234,80.12ZM32,112H72v88H32ZM223.94,97l-12,96a8,8,0,0,1-7.94,7H88V105.89l36.71-73.43A24,24,0,0,1,144,56V80a8,8,0,0,0,8,8h64a8,8,0,0,1,7.94,9Z"></path>
-                                </svg>
-                                <p className="text-sm font-normal leading-normal">{comment.likes || 0}</p>
-                            </button>
-                            <button // 버튼으로 변경
-                                className={`flex items-center gap-2 cursor-pointer hover:bg-[#e7edf4] rounded-lg px-2 py-1 transition-colors ${comment.dislikedByCurrentUser ? 'text-red-500' : 'text-[#49739c]'}`}
-                                onClick={() => handleDislikeComment(comment.id)}
-                                disabled={!user}
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" fill="currentColor"
-                                     viewBox="0 0 256 256">
-                                    <path
-                                        d="M239.82,157l-12-96A24,24,0,0,0,204,40H32A16,16,0,0,0,16,56v88a16,16,0,0,0,16,16H75.06l37.78,75.58A8,8,0,0,0,120,240a40,40,0,0,0,40-40V184h56a24,24,0,0,0,23.82-27ZM72,144H32V56H72Zm150,21.29a7.88,7.88,0,0,1-6,2.71H152a8,8,0,0,0-8,8v24a24,24,0,0,1-19.29,23.54L88,150.11V56H204a8,8,0,0,1,7.94,7l12,96A7.87,7.87,0,0,1,222,165.29Z"></path>
-                                </svg>
-                                <p className="text-sm font-normal leading-normal">{comment.dislikes || 0}</p>
-                            </button>
-                        </div>
                     </div>
                 </div>
             ))}

@@ -27,11 +27,6 @@ function Header({user, onShowPage, onLogout}) {
             className="flex items-center justify-between whitespace-nowrap border-b border-solid border-b-[#e7edf4] px-4 md:px-10 py-3 bg-white">
             <div className="flex items-center gap-4 md:gap-8">
                 <div className="flex items-center gap-4 text-[#0d141c]">
-                    <div className="size-4">
-                        <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M6 6H42L36 24L42 42H6L12 24L6 6Z" fill="currentColor"></path>
-                        </svg>
-                    </div>
                     <h2 className="text-[#0d141c] text-lg font-bold leading-tight tracking-[-0.015em]">MicroBoard</h2>
                 </div>
                 <div className="hidden md:flex items-center gap-9">
@@ -46,12 +41,6 @@ function Header({user, onShowPage, onLogout}) {
                         onClick={() => onShowPage('write')}
                     >
                         글쓰기
-                    </button>
-                    <button
-                        className="text-[#0d141c] text-sm font-medium leading-normal hover:text-[#0c7ff2] transition-colors"
-                        // onClick={() => onShowPage('categories')} // 카테고리 페이지 기능 추가 시
-                    >
-                        카테고리
                     </button>
                 </div>
             </div>
@@ -79,15 +68,6 @@ function Header({user, onShowPage, onLogout}) {
                         <button type="submit" className="hidden">Search</button>
                     </div>
                 </form>
-
-                <button
-                    className="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-10 bg-[#e7edf4] text-[#0d141c] gap-2 text-sm font-bold leading-normal tracking-[0.015em] min-w-0 px-2.5 hover:bg-[#d1d9e0] transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" fill="currentColor"
-                         viewBox="0 0 256 256">
-                        <path
-                            d="M221.8,175.94C216.25,166.38,208,139.33,208,104a80,80,0,1,0-160,0c0,35.34-8.26,62.38-13.81,71.94A16,16,0,0,0,48,200H88.81a40,40,0,0,0,78.38,0H208a16,16,0,0,0,13.8-24.06ZM128,216a24,24,0,0,1-22.62-16h45.24A24,24,0,0,1,128,216ZM48,184c7.7-13.24,16-43.92,16-80a64,64,0,1,1,128,0c0,36.05,8.28,66.73,16,80Z"></path>
-                    </svg>
-                </button>
 
                 <div
                     className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 cursor-pointer hover:ring-2 hover:ring-[#0c7ff2] transition-all"
