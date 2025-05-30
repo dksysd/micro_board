@@ -94,6 +94,5 @@ module.exports = {
     connectDB,
     initDB,
     query,
-    getClient,
     pool
 };

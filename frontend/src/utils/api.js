@@ -7,7 +7,6 @@ const getApiBaseUrl = () => {
 
     console.log('🌐 프록시 모드: 모든 API 요청을 프론트엔드 nginx를 통해 프록시');
     return ''; // 빈 문자열 = 상대 경로 사용
-    // return window.location.origin;
 };
 
 const API_BASE_URL = getApiBaseUrl();
@@ -132,12 +131,7 @@ export const authAPI = {
         console.log('👤 프로필 조회 요청 (프록시 모드)');
         const response = await api.get('/api/auth/profile');
         return response.data;
-    },
-    verifyToken: async () => {
-        console.log('🔍 토큰 검증 요청 (프록시 모드)');
-        const response = await api.post('/api/auth/verify');
-        return response.data;
-    },
+    }
 };
 
 // 게시글 관련 API - 프록시 모드에서는 공개/인증 구분 불필요
@@ -168,40 +162,7 @@ export const postAPI = {
 
         const response = await api.post('/api/posts', postData);
         return response.data;
-    },
-
-    updatePost: async (postId, postData) => {
-        console.log('✏️ 게시글 수정 (프록시 모드):', postId);
-        const token = localStorage.getItem('token');
-        if (!token) {
-            throw new Error('로그인이 필요합니다.');
-        }
-
-        const response = await api.put(`/api/posts/${postId}`, postData);
-        return response.data;
-    },
-
-    deletePost: async (postId) => {
-        console.log('🗑️ 게시글 삭제 (프록시 모드):', postId);
-        const token = localStorage.getItem('token');
-        if (!token) {
-            throw new Error('로그인이 필요합니다.');
-        }
-
-        const response = await api.delete(`/api/posts/${postId}`);
-        return response.data;
-    },
-
-    toggleLikePost: async (postId) => {
-        console.log('❤️ 게시글 좋아요 토글 (프록시 모드):', postId);
-        const token = localStorage.getItem('token');
-        if (!token) {
-            throw new Error('로그인이 필요합니다.');
-        }
-
-        const response = await api.post(`/api/posts/${postId}/like`);
-        return response.data;
-    },
+    }
 };
 
 export const commentAPI = {
@@ -210,13 +171,6 @@ export const commentAPI = {
         const response = await api.get(`/api/posts/${postId}/comments?page=${page}&limit=${limit}`);
         return response.data;
     },
-
-    getComment: async (commentId) => {
-        console.log('💬 댓글 상세 조회 (프록시 모드):', commentId);
-        const response = await api.get(`/api/comments/${commentId}`);
-        return response.data;
-    },
-
     createComment: async (postId, commentData) => {
         console.log('💬 댓글 작성 (프록시 모드):', postId);
         const token = localStorage.getItem('token');
@@ -226,64 +180,7 @@ export const commentAPI = {
 
         const response = await api.post(`/api/posts/${postId}/comments`, commentData);
         return response.data;
-    },
-
-    updateComment: async (commentId, commentData) => {
-        console.log('✏️ 댓글 수정 (프록시 모드):', commentId);
-        const token = localStorage.getItem('token');
-        if (!token) {
-            throw new Error('로그인이 필요합니다.');
-        }
-
-        const response = await api.put(`/api/comments/${commentId}`, commentData);
-        return response.data;
-    },
-
-    deleteComment: async (commentId) => {
-        console.log('🗑️ 댓글 삭제 (프록시 모드):', commentId);
-        const token = localStorage.getItem('token');
-        if (!token) {
-            throw new Error('로그인이 필요합니다.');
-        }
-
-        const response = await api.delete(`/api/comments/${commentId}`);
-        return response.data;
-    },
-
-    likeComment: async (commentId) => {
-        console.log('👍 댓글 좋아요 (프록시 모드):', commentId);
-        const token = localStorage.getItem('token');
-        if (!token) {
-            throw new Error('로그인이 필요합니다.');
-        }
-
-        const response = await api.post(`/api/comments/${commentId}/like`);
-        return response.data;
-    },
-
-    dislikeComment: async (commentId) => {
-        console.log('👎 댓글 싫어요 (프록시 모드):', commentId);
-        const token = localStorage.getItem('token');
-        if (!token) {
-            throw new Error('로그인이 필요합니다.');
-        }
-
-        const response = await api.post(`/api/comments/${commentId}/dislike`);
-        return response.data;
-    },
-};
-
-export const userAPI = {
-    getUser: async (userId) => {
-        console.log('👤 사용자 조회 (프록시 모드):', userId);
-        const response = await api.get(`/api/users/${userId}`);
-        return response.data;
-    },
-    getUsers: async (userIds) => {
-        console.log('👥 사용자 목록 조회 (프록시 모드):', userIds.length);
-        const response = await api.post('/api/users/bulk', {userIds});
-        return response.data;
-    },
+    }
 };
 
 // 유틸리티 함수들
@@ -300,9 +197,6 @@ export const apiUtils = {
         }
         return '알 수 없는 오류가 발생했습니다.';
     },
-    isSuccessResponse: (response) => {
-        return response && response.status >= 200 && response.status < 300;
-    },
     setToken: (token) => {
         localStorage.setItem('token', token);
         console.log('🔑 토큰 저장됨 (프록시 모드)');
@@ -312,10 +206,6 @@ export const apiUtils = {
         console.log('🔑 토큰 조회 (프록시 모드):', token ? '존재' : '없음');
         return token;
     },
-    removeToken: () => {
-        localStorage.removeItem('token');
-        console.log('🔑 토큰 제거됨 (프록시 모드)');
-    },
     setUser: (user) => {
         localStorage.setItem('user', JSON.stringify(user));
         console.log('👤 사용자 정보 저장됨 (프록시 모드)');
@@ -324,10 +214,6 @@ export const apiUtils = {
         const user = localStorage.getItem('user');
         return user ? JSON.parse(user) : null;
     },
-    removeUser: () => {
-        localStorage.removeItem('user');
-        console.log('👤 사용자 정보 제거됨 (프록시 모드)');
-    },
     logout: () => {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
@@ -335,5 +221,3 @@ export const apiUtils = {
         window.dispatchEvent(new CustomEvent('auth:logout'));
     },
 };
-
-export default api;

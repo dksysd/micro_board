@@ -134,9 +134,6 @@ services:
     container_name: microboard-api-gateway
     ports:
       - "8080:80" # 호스트의 8080 포트를 컨테이너의 80 포트로 매핑
-      # volumes: # Dockerfile에서 COPY 하므로, 개발 중 빠른 반영이 필요할 때만 주석 해제하여 사용
-      # - ./api-gateway/nginx.conf:/etc/nginx/nginx.conf:ro
-      # - ./api-gateway/snippets:/etc/nginx/snippets:ro # snippets 디렉토리 전체를 마운트
     depends_on:
       - auth-service
       - post-service
@@ -152,50 +149,12 @@ services:
       dockerfile: Dockerfile
       target: production
     container_name: microboard-frontend
-#    environment:
-##      - REACT_APP_API_URL=http://api-gateway:8080
-#      - CHOKIDAR_USEPOLLING=true
-#      - GENERATE_SOURCEMAP=false  # 빌드 속도 향상
-#      - DISABLE_ESLINT_PLUGIN=true  # ESLint 플러그인 비활성화 (선택사항)
-#      - NODE_ENV=development
-#      - WDS_SOCKET_HOST=localhost
     ports:
       - "3000:3000"
-#    volumes:
-#      - ./frontend:/app
-#      - /app/node_modules
-#      # nginx 설정 파일 마운트 (프록시 설정 포함)
-#      - ./frontend/nginx.conf:/etc/nginx/nginx.conf:ro
     networks:
       - microboard-network
-#    stdin_open: true
-#    tty: true
-#    command: npm start
     depends_on:
       - api-gateway  # API Gateway가 먼저 실행되도록
-
-  # Redis (캐싱 및 세션 관리용 - 선택사항)
-  redis:
-    image: redis:7-alpine
-    container_name: microboard-redis
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis-data:/data
-    networks:
-      - microboard-network
-    command: redis-server --appendonly yes
-    restart: unless-stopped
-
-  # 개발용 도구들
-  adminer:
-    image: adminer
-    container_name: microboard-adminer
-    ports:
-      - "8081:8080"
-    networks:
-      - microboard-network
-    restart: unless-stopped
 
 networks:
   microboard-network:
@@ -205,4 +164,3 @@ volumes:
   auth-db-data:
   post-db-data:
   comment-db-data:
-  redis-data:

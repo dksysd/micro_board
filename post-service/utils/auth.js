@@ -79,6 +79,5 @@ async function optionalAuth(req, authServiceUrl) {
 
 module.exports = {
     verifyAuthToken,
-    getUserInfo,
-    optionalAuth
+    getUserInfo
 };

@@ -101,6 +101,5 @@ async function optionalAuth(req, authServiceUrl) {
 module.exports = {
     verifyAuthToken,
     getUserInfo,
-    verifyPostExists,
-    optionalAuth
+    verifyPostExists
 };
