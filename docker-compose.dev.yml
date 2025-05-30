@@ -150,23 +150,27 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-      target: build
+      target: production
     container_name: microboard-frontend
-    environment:
-      - REACT_APP_API_URL=http://api-gateway:8080
-      - CHOKIDAR_USEPOLLING=true
-      - GENERATE_SOURCEMAP=false  # 빌드 속도 향상
-      - DISABLE_ESLINT_PLUGIN=true  # ESLint 플러그인 비활성화 (선택사항)
+#    environment:
+##      - REACT_APP_API_URL=http://api-gateway:8080
+#      - CHOKIDAR_USEPOLLING=true
+#      - GENERATE_SOURCEMAP=false  # 빌드 속도 향상
+#      - DISABLE_ESLINT_PLUGIN=true  # ESLint 플러그인 비활성화 (선택사항)
+#      - NODE_ENV=development
+#      - WDS_SOCKET_HOST=localhost
     ports:
       - "3000:3000"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
+#    volumes:
+#      - ./frontend:/app
+#      - /app/node_modules
+#      # nginx 설정 파일 마운트 (프록시 설정 포함)
+#      - ./frontend/nginx.conf:/etc/nginx/nginx.conf:ro
     networks:
       - microboard-network
-    stdin_open: true
-    tty: true
-    command: npm start
+#    stdin_open: true
+#    tty: true
+#    command: npm start
     depends_on:
       - api-gateway  # API Gateway가 먼저 실행되도록
 

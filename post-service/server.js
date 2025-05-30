@@ -30,10 +30,17 @@ app.set('authServiceUrl', AUTH_SERVICE_URL);
 
 // 미들웨어 설정
 app.use(helmet());
-app.use(cors({
-    origin: process.env.CORS_ORIGIN || '*',
-    credentials: true
-}));
+// 개발환경에서만 CORS 활성화 (nginx 우회 시)
+if (process.env.NODE_ENV === 'development' && process.env.DIRECT_ACCESS === 'true') {
+    const cors = require('cors');
+    app.use(cors({
+        origin: 'http://localhost:3000',
+        credentials: true
+    }));
+    console.log('CORS enabled for direct development access');
+} else {
+    console.log('CORS handled by nginx - no local CORS setup');
+}
 app.use(express.json({limit: '10mb'}));
 app.use(express.urlencoded({extended: true}));
 
