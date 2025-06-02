@@ -13,8 +13,8 @@ Docker 기반 마이크로서비스 아키텍처로 구현된 게시판 시스�
 
 ```bash
 # 1. 프로젝트 클론
-git clone https://github.com/your-org/microboard.git
-cd microboard
+git clone git clone https://github.com/dksysd/micro_board.git
+cd micro_board
 
 # 2. 환경변수 수정 (필수)
 nano ./.env
