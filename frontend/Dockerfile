@@ -35,10 +35,6 @@ RUN nginx -t
 # 포트 노출
 EXPOSE 3000
 
-# 헬스체크 추가
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:3000/health || exit 1
-
 # nginx 실행
 CMD ["nginx", "-g", "daemon off;"]
 

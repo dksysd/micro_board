@@ -1,0 +1,353 @@
+services:
+  # 프로덕션 데이터베이스들
+  auth-db:
+    image: postgres:14-alpine
+    container_name: microboard-auth-db
+    environment:
+      POSTGRES_USER: ${AUTH_DB_USER}
+      POSTGRES_PASSWORD: ${AUTH_DB_PASSWORD}
+      POSTGRES_DB: ${AUTH_DB_NAME}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    volumes:
+      - auth-db-data:/var/lib/postgresql/data
+      - ./init-scripts/auth-init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - db-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${AUTH_DB_USER} -d ${AUTH_DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/run/postgresql
+
+  post-db:
+    image: postgres:14-alpine
+    container_name: microboard-post-db
+    environment:
+      POSTGRES_USER: ${POST_DB_USER}
+      POSTGRES_PASSWORD: ${POST_DB_PASSWORD}
+      POSTGRES_DB: ${POST_DB_NAME}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    volumes:
+      - post-db-data:/var/lib/postgresql/data
+      - ./init-scripts/post-init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - db-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POST_DB_USER} -d ${POST_DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/run/postgresql
+
+  comment-db:
+    image: postgres:14-alpine
+    container_name: microboard-comment-db
+    environment:
+      POSTGRES_USER: ${COMMENT_DB_USER}
+      POSTGRES_PASSWORD: ${COMMENT_DB_PASSWORD}
+      POSTGRES_DB: ${COMMENT_DB_NAME}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    volumes:
+      - comment-db-data:/var/lib/postgresql/data
+      - ./init-scripts/comment-init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - db-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${COMMENT_DB_USER} -d ${COMMENT_DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/run/postgresql
+
+  # 백엔드 서비스들
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+      target: production
+    container_name: microboard-auth-service
+    environment:
+      - DB_HOST=auth-db
+      - DB_PORT=5432
+      - DB_NAME=${AUTH_DB_NAME}
+      - DB_USER=${AUTH_DB_USER}
+      - DB_PASSWORD=${AUTH_DB_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
+      - NODE_ENV=production
+      - PORT=3001
+      - CORS_ORIGIN=${CORS_ORIGIN}
+      - LOG_LEVEL=${LOG_LEVEL}
+    depends_on:
+      auth-db:
+        condition: service_healthy
+    networks:
+      - app-network
+      - db-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+
+  post-service:
+    build:
+      context: ./post-service
+      dockerfile: Dockerfile
+      target: production
+    container_name: microboard-post-service
+    environment:
+      - DB_HOST=post-db
+      - DB_PORT=5432
+      - DB_NAME=${POST_DB_NAME}
+      - DB_USER=${POST_DB_USER}
+      - DB_PASSWORD=${POST_DB_PASSWORD}
+      - AUTH_SERVICE_URL=http://auth-service:3001
+      - NODE_ENV=production
+      - PORT=3002
+      - CORS_ORIGIN=${CORS_ORIGIN}
+      - LOG_LEVEL=${LOG_LEVEL}
+    depends_on:
+      post-db:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+    networks:
+      - app-network
+      - db-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+
+  comment-service:
+    build:
+      context: ./comment-service
+      dockerfile: Dockerfile
+      target: production
+    container_name: microboard-comment-service
+    environment:
+      - DB_HOST=comment-db
+      - DB_PORT=5432
+      - DB_NAME=${COMMENT_DB_NAME}
+      - DB_USER=${COMMENT_DB_USER}
+      - DB_PASSWORD=${COMMENT_DB_PASSWORD}
+      - AUTH_SERVICE_URL=http://auth-service:3001
+      - POST_SERVICE_URL=http://post-service:3002
+      - NODE_ENV=production
+      - PORT=3003
+      - CORS_ORIGIN=${CORS_ORIGIN}
+      - LOG_LEVEL=${LOG_LEVEL}
+    depends_on:
+      comment-db:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+      post-service:
+        condition: service_healthy
+    networks:
+      - app-network
+      - db-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+
+  # API Gateway
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: microboard-api-gateway
+    environment:
+      - AUTH_SERVICE_URL=http://auth-service:3001
+      - POST_SERVICE_URL=http://post-service:3002
+      - COMMENT_SERVICE_URL=http://comment-service:3003
+      - CORS_ORIGIN=${CORS_ORIGIN}
+      - LOG_LEVEL=${LOG_LEVEL}
+    ports:
+      - "${API_GATEWAY_PORT:-8080}:80"
+    depends_on:
+      auth-service:
+        condition: service_healthy
+      post-service:
+        condition: service_healthy
+      comment-service:
+        condition: service_healthy
+    networks:
+      - app-network
+      - frontend-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    security_opt:
+      - no-new-privileges:true
+
+  # 프론트엔드
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: production
+    container_name: microboard-frontend
+    environment:
+      - REACT_APP_API_URL=${REACT_APP_API_URL}
+      - NODE_ENV=production
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    depends_on:
+      api-gateway:
+        condition: service_healthy
+    networks:
+      - frontend-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    security_opt:
+      - no-new-privileges:true
+
+networks:
+  # 데이터베이스 전용 네트워크 (internal)
+  db-network:
+    driver: bridge
+    internal: true
+
+  # 애플리케이션 서비스간 통신 네트워크
+  app-network:
+    driver: bridge
+    internal: true
+
+  # 프론트엔드와 API Gateway 간 통신 네트워크
+  frontend-network:
+    driver: bridge
+
+volumes:
+  # 데이터베이스별 개별 Docker Named Volumes
+  auth-db-data:
+    driver: local
+    name: microboard-auth-db-data
+  
+  post-db-data:
+    driver: local
+    name: microboard-post-db-data
+
+  comment-db-data:
+    driver: local
+    name: microboard-comment-db-data

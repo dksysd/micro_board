@@ -6,6 +6,7 @@ WORKDIR /app
 # 시스템 패키지 업데이트 및 필요한 패키지 설치
 RUN apk update && apk add --no-cache \
     postgresql-client \
+    curl \
     && rm -rf /var/cache/apk/*
 
 # package.json과 package-lock.json 복사
@@ -34,14 +35,6 @@ COPY . .
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001 && \
     chown -R nodejs:nodejs /app
-
-# 헬스체크 추가
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD node -e "const http = require('http'); \
-    const req = http.request({hostname: 'localhost', port: 3001, path: '/health'}, \
-    (res) => process.exit(res.statusCode === 200 ? 0 : 1)); \
-    req.on('error', () => process.exit(1)); \
-    req.end();"
 
 USER nodejs
 EXPOSE 3001

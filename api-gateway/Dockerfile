@@ -19,9 +19,5 @@ RUN touch /var/log/nginx/access.log /var/log/nginx/error.log && \
 # 컨테이너 내부에서 nginx가 사용할 포트 노출 (nginx.conf의 listen과 일치해야 함)
 EXPOSE 80
 
-# 헬스체크 추가
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost/health || exit 1
-
 # 컨테이너 시작 시 Nginx 실행
 CMD ["nginx", "-g", "daemon off;"]
