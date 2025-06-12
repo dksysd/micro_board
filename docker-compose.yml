@@ -7,7 +7,7 @@ services:
       POSTGRES_USER: ${AUTH_DB_USER}
       POSTGRES_PASSWORD: ${AUTH_DB_PASSWORD}
       POSTGRES_DB: ${AUTH_DB_NAME}
-      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8"
     volumes:
       - auth-db-data:/var/lib/postgresql/data
       - ./init-scripts/auth-init:/docker-entrypoint-initdb.d:ro
@@ -42,7 +42,7 @@ services:
       POSTGRES_USER: ${POST_DB_USER}
       POSTGRES_PASSWORD: ${POST_DB_PASSWORD}
       POSTGRES_DB: ${POST_DB_NAME}
-      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8"
     volumes:
       - post-db-data:/var/lib/postgresql/data
       - ./init-scripts/post-init:/docker-entrypoint-initdb.d:ro
@@ -77,7 +77,7 @@ services:
       POSTGRES_USER: ${COMMENT_DB_USER}
       POSTGRES_PASSWORD: ${COMMENT_DB_PASSWORD}
       POSTGRES_DB: ${COMMENT_DB_NAME}
-      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8"
     volumes:
       - comment-db-data:/var/lib/postgresql/data
       - ./init-scripts/comment-init:/docker-entrypoint-initdb.d:ro
